@@ -1,20 +1,120 @@
 # Reproducible Research: Peer Assessment 1
 
-
 ## Loading and preprocessing the data
 
+#### Loading Data: activity data is unzipped and placed in ./activity/ directory
+```{r ECHO=T}
+fd <- './activity/'
+fp <- paste(fd,'activity.csv', sep='')
+activity <-read.csv(file=fp)
+head(activity)
 
+library(lubridate)
+activity$date<- ymd(activity$date)
+```
 
 ## What is mean total number of steps taken per day?
+#### Summary by Date
+```{r ECHO=T}
+sumStepByDate <- data.frame(with(activity, tapply(steps, date, sum, na.rm=T, simplify = T)))
+names(sumStepByDate) <- c('TotalSteps')
+sumStepByDate$Date <- rownames(sumStepByDate)
+library(lubridate)
+sumStepByDate$Date <- ymd(sumStepByDate$Date)
+str(sumStepByDate$Date)
+```
+#### Histogram of Total Number of Steps Taken Per Day
+```{r ECHO=T}
+hist(x=sumStepByDate$TotalSteps, main='Distribution of Total Number\n of Steps Taken Each Day')
+```
 
+#### Mean and Median Total Number of Steps Taken Per Day
+```{r ECHO=T}
+# Mean Value
+mean(x=sumStepByDate$TotalSteps, na.rm = T)
+# Median Value
+median(x=sumStepByDate$TotalSteps, na.rm = T)
+```
 
 
 ## What is the average daily activity pattern?
+#### Summary by Interval
+```{r ECHO=T}
+AverageStepByInterval <- data.frame(with(activity, tapply(steps, interval, mean, na.rm=T, simplify = T)))
+names(AverageStepByInterval) <- c('AverageSteps')
+AverageStepByInterval$interval <- rownames(AverageStepByInterval)
+str(AverageStepByInterval$interval)
+```
 
+#### Time Series Plot of the 5-minute interval and the average number of steps taken, averaged across all days
+```{r ECHO=T}
+with(AverageStepByInterval, plot(AverageSteps~interval, type="l"))
+```
 
+#### 5-minute interval contains the maximum number of steps
+```{r ECHO=T}
+ind<-with(AverageStepByInterval, which(AverageSteps == max(AverageSteps)))
+AverageStepByInterval[ind,]
+```
 
 ## Imputing missing values
 
+#### Total Number of Missing Values
+```{r ECHO=T}
+cntNA = sum(is.na(activity$steps))
+allCnt = nrow(activity)
+rNA = cntNA / allCnt
+sprintf("Number of Missing %d    Portion of Missing Observations %f", cntNA, rNA)
+```
+
+#### Filling missing Data using average of 5-minute interval
+```{r ECHO=T}
+activity_cleaned <- merge(activity, AverageStepByInterval, by.x="interval", by.y = "interval", all=T)
+activity_cleaned$steps[is.na(activity_cleaned$steps)] <- activity_cleaned$AverageSteps[is.na(activity_cleaned$steps)]
+activity_cleaned<-activity_cleaned[,c(1,2,3)]
+head(activity_cleaned)
+```
+
+#### Summary by Date
+```{r ECHO=T}
+sumStepByDate <- data.frame(with(activity_cleaned, tapply(steps, date, sum, na.rm=T, simplify = T)))
+names(sumStepByDate) <- c('TotalSteps')
+sumStepByDate$Date <- rownames(sumStepByDate)
+library(lubridate)
+sumStepByDate$Date <- ymd(sumStepByDate$Date)
+str(sumStepByDate$Date)
+```
+
+#### Histogram of Total Number of Steps Taken Per Day
+```{r ECHO=T}
+hist(x=sumStepByDate$TotalSteps, main='Distribution of Total Number\n of Steps Taken Each Day')
+```
+
+#### Mean and Median Total Number of Steps Taken Per Day
+```{r ECHO=T}
+# Mean Value
+mean(x=sumStepByDate$TotalSteps, na.rm = F)
+# Median Value
+median(x=sumStepByDate$TotalSteps, na.rm = F)
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+#### Assign new factor variable in the dataset activity_clean with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend
+```{r ECHO=T}
+isWeekday <- wday(activity_cleaned$date) > 1 & wday(activity_cleaned$date) < 7
+activity_cleaned$daytype[isWeekday]<-'weekday'
+activity_cleaned$daytype[!isWeekday]<-'weekend'
+activity_cleaned$daytype <- as.factor(activity_cleaned$daytype)
+```
+####  time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis)
+```{r ECHO=T}
+#### Summary by Interval
+activity_avg_interval<-with(activity_cleaned, aggregate(steps, by=list(interval, daytype), FUN=mean))
+names(activity_avg_interval) <- c('interval', 'daytype', 'avgsteps')
+```
+```{r ECHO=T}
+library(lattice)
+## Plot with 2 Panels
+with (activity_avg_interval, xyplot(avgsteps~interval | daytype, layout = c(1,2), type="l",ylab="Number of steps"))
+```
