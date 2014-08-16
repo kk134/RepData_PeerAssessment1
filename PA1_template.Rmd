@@ -69,10 +69,19 @@ sprintf("Number of Missing %d    Portion of Missing Observations %f", cntNA, rNA
 
 #### Filling missing Data using average of 5-minute interval
 ```{r ECHO=T}
+
+# get the average step of 5-minute interval and replace NA with it
 activity_cleaned <- merge(activity, AverageStepByInterval, by.x="interval", by.y = "interval", all=T)
 activity_cleaned$steps[is.na(activity_cleaned$steps)] <- activity_cleaned$AverageSteps[is.na(activity_cleaned$steps)]
 activity_cleaned<-activity_cleaned[,c(1,2,3)]
-head(activity_cleaned)
+
+# sort data by date and interval
+activity_cleaned<-with(activity_cleaned, activity_cleaned[order(date,interval),])
+
+# some checking with original activity
+activity[2014:2020,]
+activity_cleaned[2014:2020,]
+AverageStepByInterval[1:5,]
 ```
 
 #### Summary by Date

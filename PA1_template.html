@@ -137,17 +137,40 @@ sprintf(&quot;Number of Missing %d    Portion of Missing Observations %f&quot;, 
 </div>
 <div id="filling-missing-data-using-average-of-5-minute-interval" class="section level4">
 <h4>Filling missing Data using average of 5-minute interval</h4>
-<pre class="r"><code>activity_cleaned &lt;- merge(activity, AverageStepByInterval, by.x=&quot;interval&quot;, by.y = &quot;interval&quot;, all=T)
+<pre class="r"><code># get the average step of 5-minute interval and replace NA with it
+activity_cleaned &lt;- merge(activity, AverageStepByInterval, by.x=&quot;interval&quot;, by.y = &quot;interval&quot;, all=T)
 activity_cleaned$steps[is.na(activity_cleaned$steps)] &lt;- activity_cleaned$AverageSteps[is.na(activity_cleaned$steps)]
 activity_cleaned&lt;-activity_cleaned[,c(1,2,3)]
-head(activity_cleaned)</code></pre>
-<pre><code>##   interval steps       date
-## 1        0 1.717 2012-10-01
-## 2        0 0.000 2012-11-23
-## 3        0 0.000 2012-10-28
-## 4        0 0.000 2012-11-06
-## 5        0 0.000 2012-11-24
-## 6        0 0.000 2012-11-15</code></pre>
+
+# sort data by date and interval
+activity_cleaned&lt;-with(activity_cleaned, activity_cleaned[order(date,interval),])
+
+# some checking with original activity
+activity[2014:2020,]</code></pre>
+<pre><code>##      steps       date interval
+## 2014     0 2012-10-07     2345
+## 2015     0 2012-10-07     2350
+## 2016     0 2012-10-07     2355
+## 2017    NA 2012-10-08        0
+## 2018    NA 2012-10-08        5
+## 2019    NA 2012-10-08       10
+## 2020    NA 2012-10-08       15</code></pre>
+<pre class="r"><code>activity_cleaned[2014:2020,]</code></pre>
+<pre><code>##       interval  steps       date
+## 17428     2345 0.0000 2012-10-07
+## 17484     2350 0.0000 2012-10-07
+## 17564     2355 0.0000 2012-10-07
+## 58           0 1.7170 2012-10-08
+## 89           5 0.3396 2012-10-08
+## 159         10 0.1321 2012-10-08
+## 199         15 0.1509 2012-10-08</code></pre>
+<pre class="r"><code>AverageStepByInterval[1:5,]</code></pre>
+<pre><code>##    AverageSteps interval
+## 0       1.71698        0
+## 5       0.33962        5
+## 10      0.13208       10
+## 15      0.15094       15
+## 20      0.07547       20</code></pre>
 </div>
 <div id="summary-by-date-1" class="section level4">
 <h4>Summary by Date</h4>
